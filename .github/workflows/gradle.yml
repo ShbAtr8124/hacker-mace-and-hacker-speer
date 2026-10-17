@@ -1,0 +1,47 @@
+
+name: Build Mafia Hacker Mod
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Validate project files
+        run: |
+          test -f build.gradle
+          test -f gradle.properties
+          test -f src/main/resources/fabric.mod.json
+
+      - name: Build mod
+        run: |
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew build
+          else
+            echo "Missing Gradle wrapper (gradlew). Add the Gradle wrapper files first."
+            exit 1
+          fi
+
+      - name: Upload mod JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: mafia-hacker-mod-jar
+          path: build/libs/*.jar
+          if-no-files-found: error
