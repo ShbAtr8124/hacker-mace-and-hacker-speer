@@ -23,44 +23,42 @@ public class HackerItemTracker {
     }
 
     private static void scan(MinecraftServer server) {
-        // For each world, collect findings and send formatted chat lines to ops
+        // Für jede Welt: Findings sammeln und an alle Online-Spieler senden
         for (ServerWorld world : server.getWorlds()) {
-            // 1) Players who hold or have the items in inventory
+            // 1) Spieler, die die Items halten oder im Inventar haben
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
                 String abbrName = abbreviate(player.getName().getString());
 
-                // Check main hand
+                // Mainhand
                 if (player.getMainHandStack().getItem() == ModItems.HACKER_MACE) {
                     String msg = String.format("HACKER-MACE-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    sendToOps(server, Text.of(msg));
+                    broadcast(server, Text.of(msg));
                 }
-
                 if (player.getMainHandStack().getItem() == ModItems.HACKER_SPEAR) {
                     String msg = String.format("HACKER-SPEAR-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    sendToOps(server, Text.of(msg));
+                    broadcast(server, Text.of(msg));
                 }
 
-                // Check offhand
+                // Offhand
                 if (player.getOffHandStack().getItem() == ModItems.HACKER_MACE) {
                     String msg = String.format("HACKER-MACE-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    sendToOps(server, Text.of(msg));
+                    broadcast(server, Text.of(msg));
                 }
-
                 if (player.getOffHandStack().getItem() == ModItems.HACKER_SPEAR) {
                     String msg = String.format("HACKER-SPEAR-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    sendToOps(server, Text.of(msg));
+                    broadcast(server, Text.of(msg));
                 }
 
-                // Check full inventory
+                // Inventory
                 try {
                     for (int i = 0; i < player.getInventory().size(); i++) {
                         if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_MACE) {
                             String msg = String.format("HACKER-MACE-TRACKER (inv slot %d, %s) bei %s", i, player.getBlockPos().toShortString(), abbrName);
-                            sendToOps(server, Text.of(msg));
+                            broadcast(server, Text.of(msg));
                         }
                         if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_SPEAR) {
                             String msg = String.format("HACKER-SPEAR-TRACKER (inv slot %d, %s) bei %s", i, player.getBlockPos().toShortString(), abbrName);
-                            sendToOps(server, Text.of(msg));
+                            broadcast(server, Text.of(msg));
                         }
                     }
                 } catch (Exception ignored) {
@@ -68,7 +66,7 @@ public class HackerItemTracker {
                 }
             }
 
-            // 2) Dropped item entities
+            // 2) Fallengelassene Item-Entities
             Box full = new Box(-3.0E7D, -3.0E7D, -3.0E7D, 3.0E7D, 3.0E7D, 3.0E7D);
             List<ItemEntity> items = world.getEntitiesByClass(ItemEntity.class, full, ie -> {
                 try {
@@ -83,7 +81,7 @@ public class HackerItemTracker {
                 String pos = ie.getBlockPos().toShortString();
                 String ownerAbbr = "??";
 
-                // Try to find owner via NBT "hackeritems:owner" (if present)
+                // Versuche Owner via NBT "hackeritems:owner" zu lesen (falls vorhanden)
                 try {
                     if (ie.getStack().hasNbt() && ie.getStack().getNbt().containsUuid("hackeritems:owner")) {
                         UUID ownerUuid = ie.getStack().getNbt().getUuid("hackeritems:owner");
@@ -93,17 +91,15 @@ public class HackerItemTracker {
                 } catch (Exception ignored) {}
 
                 String msg = String.format("%s (%s) liegend bei %s (owner=%s)", type, pos, world.getRegistryKey().getValue().toString(), ownerAbbr);
-                sendToOps(server, Text.of(msg));
+                broadcast(server, Text.of(msg));
             }
         }
     }
 
-    private static void sendToOps(MinecraftServer server, Text message) {
+    private static void broadcast(MinecraftServer server, Text message) {
         for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
             try {
-                if (p.hasPermissionLevel(2)) {
-                    p.sendMessage(message, false);
-                }
+                p.sendMessage(message, false);
             } catch (Exception ignored) {}
         }
     }
