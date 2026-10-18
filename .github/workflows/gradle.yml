@@ -35,5 +35,8 @@ jobs:
         with:
           gradle-version: '9.6.0'
 
-      - name: Build mod
-        run: gradle build
+      - name: Upload Mod JAR
+  uses: actions/upload-artifact@v4
+  with:
+    name: mafia-hacker-mod
+    path: build/libs/*.jar
