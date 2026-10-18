@@ -13,60 +13,111 @@ import java.util.UUID;
 
 public class HackerItemTracker {
     private static int tickCounter = 0;
+    private static boolean active = false;
+    private static int activeTickCounter = 0;
+    private static int lastSeenTick = 0;
 
     public static void init() {
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             tickCounter++;
-            if (tickCounter % 6000 != 0) return; // alle 5 Minuten (6000 Ticks)
-            scan(server);
+
+            // Early detection phase: if no tracker active, check every 100 ticks
+            if (!active) {
+                if (tickCounter % 100 == 0) {
+                    if (hasAnyHackerItem(server)) {
+                        active = true;
+                        activeTickCounter = 0;
+                        lastSeenTick = tickCounter;
+                        broadcast(server, Text.of("HackerItemTracker aktiviert: Hacker-Item erkannt"));
+                    }
+                }
+                return;
+            }
+
+            // Active phase: scan every 6000 ticks = 5 minutes
+            activeTickCounter++;
+            if (activeTickCounter % 6000 == 0) {
+                scanAndBroadcast(server);
+            }
+
+            // If a hacker item vanishes for ~30s, turn tracker off automatically
+            if (tickCounter % 200 == 0) {
+                if (hasAnyHackerItem(server)) {
+                    lastSeenTick = tickCounter;
+                } else {
+                    if (tickCounter - lastSeenTick > 600) {
+                        active = false;
+                        broadcast(server, Text.of("HackerItemTracker deaktiviert: kein Hacker-Item mehr gefunden"));
+                    }
+                }
+            }
         });
     }
 
-    private static void scan(MinecraftServer server) {
-        // Für jede Welt: Findings sammeln und an alle Online-Spieler senden
+    private static boolean hasAnyHackerItem(MinecraftServer server) {
+        // Check players' main/off hand + inventory
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            try {
+                if (player.getMainHandStack().getItem() == ModItems.HACKER_MACE) return true;
+                if (player.getOffHandStack().getItem() == ModItems.HACKER_MACE) return true;
+                if (player.getMainHandStack().getItem() == ModItems.HACKER_SPEAR) return true;
+                if (player.getOffHandStack().getItem() == ModItems.HACKER_SPEAR) return true;
+
+                for (int i = 0; i < player.getInventory().size(); i++) {
+                    if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_MACE) return true;
+                    if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_SPEAR) return true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Check dropped entity items in all worlds
+        Box full = new Box(-3.0E7D, -3.0E7D, -3.0E7D, 3.0E7D, 3.0E7D, 3.0E7D);
         for (ServerWorld world : server.getWorlds()) {
-            // 1) Spieler, die die Items halten oder im Inventar haben
+            List<ItemEntity> items = world.getEntitiesByClass(ItemEntity.class, full, ie -> {
+                try {
+                    return ie.getStack().getItem() == ModItems.HACKER_MACE || ie.getStack().getItem() == ModItems.HACKER_SPEAR;
+                } catch (Exception e) {
+                    return false;
+                }
+            });
+            if (!items.isEmpty()) return true;
+        }
+
+        return false;
+    }
+
+    private static void scanAndBroadcast(MinecraftServer server) {
+        for (ServerWorld world : server.getWorlds()) {
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
                 String abbrName = abbreviate(player.getName().getString());
 
-                // Mainhand
                 if (player.getMainHandStack().getItem() == ModItems.HACKER_MACE) {
-                    String msg = String.format("HACKER-MACE-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    broadcast(server, Text.of(msg));
+                    broadcast(server, Text.of(String.format("HACKER-MACE-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName)));
                 }
                 if (player.getMainHandStack().getItem() == ModItems.HACKER_SPEAR) {
-                    String msg = String.format("HACKER-SPEAR-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    broadcast(server, Text.of(msg));
+                    broadcast(server, Text.of(String.format("HACKER-SPEAR-TRACKER (%s) bei %s", player.getBlockPos().toShortString(), abbrName)));
                 }
-
-                // Offhand
                 if (player.getOffHandStack().getItem() == ModItems.HACKER_MACE) {
-                    String msg = String.format("HACKER-MACE-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    broadcast(server, Text.of(msg));
+                    broadcast(server, Text.of(String.format("HACKER-MACE-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName)));
                 }
                 if (player.getOffHandStack().getItem() == ModItems.HACKER_SPEAR) {
-                    String msg = String.format("HACKER-SPEAR-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName);
-                    broadcast(server, Text.of(msg));
+                    broadcast(server, Text.of(String.format("HACKER-SPEAR-TRACKER (offhand, %s) bei %s", player.getBlockPos().toShortString(), abbrName)));
                 }
 
-                // Inventory
                 try {
                     for (int i = 0; i < player.getInventory().size(); i++) {
                         if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_MACE) {
-                            String msg = String.format("HACKER-MACE-TRACKER (inv slot %d, %s) bei %s", i, player.getBlockPos().toShortString(), abbrName);
-                            broadcast(server, Text.of(msg));
+                            broadcast(server, Text.of(String.format("HACKER-MACE-TRACKER (inv slot %d) bei %s", i, abbrName)));
                         }
                         if (player.getInventory().getStack(i).getItem() == ModItems.HACKER_SPEAR) {
-                            String msg = String.format("HACKER-SPEAR-TRACKER (inv slot %d, %s) bei %s", i, player.getBlockPos().toShortString(), abbrName);
-                            broadcast(server, Text.of(msg));
+                            broadcast(server, Text.of(String.format("HACKER-SPEAR-TRACKER (inv slot %d) bei %s", i, abbrName)));
                         }
                     }
                 } catch (Exception ignored) {
-                    // ignore inventory scan errors
                 }
             }
 
-            // 2) Fallengelassene Item-Entities
             Box full = new Box(-3.0E7D, -3.0E7D, -3.0E7D, 3.0E7D, 3.0E7D, 3.0E7D);
             List<ItemEntity> items = world.getEntitiesByClass(ItemEntity.class, full, ie -> {
                 try {
@@ -81,7 +132,6 @@ public class HackerItemTracker {
                 String pos = ie.getBlockPos().toShortString();
                 String ownerAbbr = "??";
 
-                // Versuche Owner via NBT "hackeritems:owner" zu lesen (falls vorhanden)
                 try {
                     if (ie.getStack().hasNbt() && ie.getStack().getNbt().containsUuid("hackeritems:owner")) {
                         UUID ownerUuid = ie.getStack().getNbt().getUuid("hackeritems:owner");
@@ -90,8 +140,7 @@ public class HackerItemTracker {
                     }
                 } catch (Exception ignored) {}
 
-                String msg = String.format("%s (%s) liegend bei %s (owner=%s)", type, pos, world.getRegistryKey().getValue().toString(), ownerAbbr);
-                broadcast(server, Text.of(msg));
+                broadcast(server, Text.of(String.format("%s (%s) liegend bei %s (owner=%s)", type, pos, world.getRegistryKey().getValue().toString(), ownerAbbr)));
             }
         }
     }
@@ -108,8 +157,6 @@ public class HackerItemTracker {
         if (name == null || name.isEmpty()) return "??";
         name = name.trim();
         if (name.length() == 1) return name + name;
-        String first = name.substring(0, 1);
-        String last = name.substring(name.length() - 1);
-        return first + last;
+        return name.substring(0, 1) + name.substring(name.length() - 1);
     }
 }
