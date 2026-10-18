@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RGR",
+    "RSR",
+    "RLR"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "minecraft:golden_apple"
+    },
+    "S": {
+      "item": "minecraft:diamond_spear"
+    },
+    "L": {
+      "item": "minecraft:lava_bucket"
+    }
+  },
+  "result": {
+    "id": "mafia_hacker_mod:hacker_spear",
+    "count": 1
+  }
+}
