@@ -3,7 +3,7 @@ package com.mafia.hackermod;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 
@@ -24,7 +24,7 @@ public class MafiaHackerMod implements ModInitializer {
     private static Item registerItem(String name, Item item) {
         return Registry.register(
                 BuiltInRegistries.ITEM,
-                ResourceLocation.fromNamespaceAndPath(MOD_ID, name),
+                Identifier.fromNamespaceAndPath(MOD_ID, name),
                 item
         );
     }
