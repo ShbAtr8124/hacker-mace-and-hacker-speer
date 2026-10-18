@@ -19,14 +19,31 @@ public class HackerSpearItem extends Item {
         ItemStack stack = user.getStackInHand(hand);
 
         if (!world.isClient) {
-            Vec3d dir = user.getRotationVec(1.0F).multiply(1.6);
-            ItemEntity thrown = new ItemEntity(world, user.getX() + dir.x, user.getEyeY() + dir.y, user.getZ() + dir.z, new ItemStack(this));
-            thrown.setVelocity(dir.x, dir.y + 0.1, dir.z);
-            thrown.setOwner(user);
-            world.spawnEntity(thrown);
+            // 5 dashes pro 10s -> einfache Java-Logik mit einem NBT-Tag
+            int current = stack.getOrCreateNbt().getInt("hackeritems:dashes_10s");
+            long now = world.getTime();
+            long last = stack.getOrCreateNbt().getLong("hackeritems:last_dash_time");
 
-            if (!user.getAbilities().creativeMode) {
-                stack.decrement(1);
+            // Reset nach 10 Sekunden
+            if (now - last >= 200L) {
+                current = 0;
+                last = now;
+            }
+
+            if (current < 5) {
+                Vec3d dir = user.getRotationVec(1.0F).multiply(1.6);
+                ItemEntity thrown = new ItemEntity(world, user.getX() + dir.x, user.getEyeY() + dir.y, user.getZ() + dir.z, new ItemStack(this));
+                thrown.setVelocity(dir.x, dir.y + 0.1, dir.z);
+                thrown.setOwner(user);
+                world.spawnEntity(thrown);
+
+                current++;
+                stack.getOrCreateNbt().putInt("hackeritems:dashes_10s", current);
+                stack.getOrCreateNbt().putLong("hackeritems:last_dash_time", now);
+
+                if (!user.getAbilities().creativeMode) {
+                    stack.decrement(1);
+                }
             }
         }
 
