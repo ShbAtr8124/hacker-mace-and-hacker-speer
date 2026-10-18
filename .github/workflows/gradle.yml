@@ -2,12 +2,9 @@
 name: Build Mafia Hacker Mod
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-
-permissions:
-  contents: read
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,26 +14,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 25
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
 
-      - name: Validate project files
-        run: |
-          test -f build.gradle
-          test -f gradle.properties
-          test -f src/main/resources/fabric.mod.json
-
-      
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
 
+      - name: Build mod
+        run: gradle build
+
       - name: Upload Mod JAR
-  uses: actions/upload-artifact@v4
-  with:
-    name: mafia-hacker-mod
-    path: build/libs/*.jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: mafia-hacker-mod
+          path: build/libs/*.jar
+          if-no-files-found: error
