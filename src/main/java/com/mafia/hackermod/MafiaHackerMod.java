@@ -20,6 +20,7 @@ public class MafiaHackerMod implements ModInitializer {
     public static final Item TOTEM_OF_IMMORTALITY = TotemItems.register("totem_of_immortality");
     public static final Item TOTEM_OF_CRYSTAL_PROTECTION = TotemItems.register("totem_of_crystal_protection");
     public static final Item TOTEM_OF_DOUBLE_KNOCKBACK = TotemItems.register("totem_of_double_knockback");
+    public static final Item TOTEM_OF_TOTEM = TotemItems.register("totem_of_totem");
 
     private static Item registerItem(String name) {
         Identifier id = Identifier.fromNamespaceAndPath(MOD_ID, name);
