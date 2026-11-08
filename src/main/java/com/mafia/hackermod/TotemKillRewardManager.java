@@ -1,14 +1,11 @@
 package com.mafia.hackermod;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageTypes;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
@@ -25,7 +22,8 @@ public final class TotemKillRewardManager {
             MafiaHackerMod.TOTEM_OF_DROPPING,
             MafiaHackerMod.TOTEM_OF_IMMORTALITY,
             MafiaHackerMod.TOTEM_OF_CRYSTAL_PROTECTION,
-            MafiaHackerMod.TOTEM_OF_DOUBLE_KNOCKBACK
+            MafiaHackerMod.TOTEM_OF_DOUBLE_KNOCKBACK,
+            MafiaHackerMod.TOTEM_OF_TOTEM
     };
 
     private static final Item[] ALL_TOTEMS = new Item[] {
@@ -33,7 +31,8 @@ public final class TotemKillRewardManager {
             MafiaHackerMod.TOTEM_OF_DROPPING,
             MafiaHackerMod.TOTEM_OF_IMMORTALITY,
             MafiaHackerMod.TOTEM_OF_CRYSTAL_PROTECTION,
-            MafiaHackerMod.TOTEM_OF_DOUBLE_KNOCKBACK
+            MafiaHackerMod.TOTEM_OF_DOUBLE_KNOCKBACK,
+            MafiaHackerMod.TOTEM_OF_TOTEM
     };
 
     private TotemKillRewardManager() {}
@@ -47,8 +46,8 @@ public final class TotemKillRewardManager {
             int kills = KILL_COUNTS.getOrDefault(uuid, 0) + 1;
             KILL_COUNTS.put(uuid, kills);
 
-            if (kills % 2500 == 0) {
-                giveItems(serverPlayer, ALL_TOTEMS, "§aYou reached 2500 kills and got all Totems!");
+            if (kills % 3000 == 0) {
+                giveItems(serverPlayer, ALL_TOTEMS, "§aYou reached 3000 kills and got all six Totems!");
                 return;
             }
 
@@ -64,8 +63,8 @@ public final class TotemKillRewardManager {
             ItemStack stack = new ItemStack(item);
             if (!player.getInventory().insertStack(stack)) {
                 Vec3d pos = player.getPos();
-                ItemEntity entity = new ItemEntity(player.getWorld(), pos.x, pos.y + 1, pos.z, stack);
-                player.getWorld().spawnEntity(entity);
+                ItemEntity dropped = new ItemEntity(player.getWorld(), pos.x, pos.y + 1, pos.z, stack);
+                player.getWorld().spawnEntity(dropped);
             }
         }
         player.sendMessage(Text.of(message), false);
