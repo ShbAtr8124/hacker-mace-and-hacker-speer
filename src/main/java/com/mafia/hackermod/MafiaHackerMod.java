@@ -21,6 +21,7 @@ public class MafiaHackerMod implements ModInitializer {
     public static final Item TOTEM_OF_CRYSTAL_PROTECTION = TotemItems.register("totem_of_crystal_protection");
     public static final Item TOTEM_OF_DOUBLE_KNOCKBACK = TotemItems.register("totem_of_double_knockback");
     public static final Item TOTEM_OF_TOTEM = TotemItems.register("totem_of_totem");
+    public static final Item POTION_OF_SPECTATING = registerBasicItem("potion_of_spectating");
 
     private static Item registerItem(String name) {
         Identifier id = Identifier.fromNamespaceAndPath(MOD_ID, name);
@@ -34,10 +35,23 @@ public class MafiaHackerMod implements ModInitializer {
         return Registry.register(BuiltInRegistries.ITEM, id, item);
     }
 
+    private static Item registerBasicItem(String name) {
+        Identifier id = Identifier.fromNamespaceAndPath(MOD_ID, name);
+        ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, id);
+
+        Item item = new PotionOfSpectating(new Item.Properties()
+                .setId(itemKey)
+                .stacksTo(1)
+                .rarity(Rarity.EPIC));
+
+        return Registry.register(BuiltInRegistries.ITEM, id, item);
+    }
+
     @Override
     public void onInitialize() {
         TotemLogic.init();
         TotemKillRewardManager.init();
-        System.out.println("[Mafia Hacker Mod] Hacker Mace, Hacker Spear and Totem items registered.");
+        PotionOfSpectating.init();
+        System.out.println("[Mafia Hacker Mod] Hacker items, Totems and Spectating Potion registered.");
     }
 }
